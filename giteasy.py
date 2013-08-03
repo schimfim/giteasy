@@ -64,6 +64,7 @@ class Repo(object):
 		user = self.username
 		repo = self.repo
 		status, r = self.g.repos[user][repo].contents[name].get()
+		logging.debug(json.dumps(r, indent=2, sort_keys=True))
 		if status != 200:
 			raise IOError('File not found: ' + name)
 		logging.info('File loaded: ' + name)
@@ -90,6 +91,7 @@ class Repo(object):
 			self.download(name)
 			sha = self.last_sha
 			d['sha'] = sha
+			self.last_sha = None
 		except IOError:
 			logging.info('File not found: ' + name)
 			if not self.auto_create:
@@ -98,7 +100,9 @@ class Repo(object):
 		# Create or update (needs sha)
 		status, r = self.g.repos[user][repo].contents[name].put(body=d)
 		if status not in (200, 201):
-			raise IOError('Could not upload file. Status: ' + status)
+			logging.error('Could not upload file. Status: {}'.format(status))
+			pretty(r)
+			raise IOError('Could not upload file')
 		logging.info('Uploaded file: ' + name)
 	
 	#
@@ -119,6 +123,7 @@ class Repo(object):
 				self.upload(name, txt)
 			except IOError:
 				logging.error('Could not upload file: ' + name)
+				raise
 
 ################
 # CLI
