@@ -139,6 +139,8 @@ class RepoCLI(cmd.Cmd):
 	def do_f(self, parms):
 		# Show list of files
 		print self.files
+	def help_f(self, parms):
+		print 'Show list of files'
 	
 	def do_d(self, parms):
 		# Download files
@@ -147,4 +149,9 @@ class RepoCLI(cmd.Cmd):
 	def do_u(self, parms):
 		# Upload files
 		self.repo.upload_files(self.files)
+
+	def do_o(self, parms):
+		# Upload one file
+		f = [parms]
+		self.repo.upload_files(f)
 
