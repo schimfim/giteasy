@@ -34,12 +34,12 @@ class Repo(object):
 		self.username = user
 		self.last_sha = None
 		self.auto_create = auto_create
-		self.commit_msg = 'Auto commit by giteasy2'
+		self.commit_msg = 'Auto commit by giteasy'
 		self.repo = repo
 		self.res = None 
 		self.status = 0
 		if self.exists():
-			logging.info('Connected to repo: ' + repo)
+			logging.info('Connected to %s as %s',repo,user)
 		else: 
 			logging.info('Could not connect to repo:'+repo)
 	
@@ -192,5 +192,7 @@ class RepoCLI(cmd.Cmd):
 
 
 if __name__ == '__main__':
-	files = set(glob.glob('*.py')) - set(['sync.py'])
-	RepoCLI('giteasy', 'schimfim', 'Ninz2009', files)
+	import auth
+	files = set(glob.glob('*.py'))-set(['auth.py'])
+	RepoCLI(auth.repo, auth.user, auth.pwd, files)
+	
