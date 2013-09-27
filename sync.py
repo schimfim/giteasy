@@ -1,4 +1,5 @@
 from giteasy import RepoCLI
+import glob
 
-files = ['agithub.py', 'giteasy.py', 'git_test.py', 'sync.py', '__init__.py']
+files = set(glob.glob('*.py')) - set(['sync.py'])
 RepoCLI('giteasy', 'schimfim', 'Ninz2009', files)
