@@ -1,15 +1,17 @@
 # giteasy.py
-# Simplified git access for python
-# TODO:
-# - use Repo class
-# - cleanup code
+# One-file git access for python
 
-from agithub import Github
+import requests
 from base64 import b64decode, b64encode
+import json
+import glob
+from string import join
 import json
 
 import logging
 logging.basicConfig(level=logging.INFO)
+
+API = 'https://api.github.com'
 
 # Utilities
 def content(d):
@@ -18,54 +20,75 @@ def content(d):
 def pretty(r):
 	print(json.dumps(r, indent=2, sort_keys=True))
 
-# API
-# Abstraction of the low level github api
-# introducing functional interfaces and
-# exceptions
-class Giteasy(object):
-	def __init__(self, user, pwd):
-		self.g = Github(user, pwd)
-		self.username = user
+# REST access
 
-	def repos(self):
-		r = self.g.user.repos.get()
-		for repo in r[1]:
-			print repo['name']
-
-	def create_repo(self, aname):
-		r = self.g.user.repos.post(
-			body={'name': aname, 'auto_init': True})
-		return r
+# github API
 
 # Repo
 class Repo(object):
-	def __init__(self, repo, user, pwd, auto_create=True):
-		self.g = Github(user, pwd)
+	def __init__(self, repo, user, pwd,
+	             auto_create=True):
+		self.auth = (user, pwd)
+		self.rurl = '{}/repos/{}/{}'.format(API, user,
+		                                   	repo)
 		self.username = user
 		self.last_sha = None
 		self.auto_create = auto_create
-		self.commit_msg = 'Auto commit by giteasy'
+		self.commit_msg = 'Auto commit by giteasy2'
 		self.repo = repo
+		self.res = None 
+		self.status = 0
 		if self.exists():
 			logging.info('Connected to repo: ' + repo)
 		else: 
-			logging.info('Could not connect to repo:' + repo)
+			logging.info('Could not connect to repo:'+repo)
+	
+	def makeRurl(self, parms):
+		s = self.rurl
+		for p in parms:
+			s += '/' + p
+		logging.info('url=%s', s)
+		return s
+	
+	def get(self, parms=[]):
+		'''
+		Wrapper for requests.get
+		Builds url from parms
+		Stores result in self.res
+		Returns json content
+		'''
+		url = self.makeRurl(parms)
+		r = requests.get(url, auth=self.auth)
+		self.res = r
+		self.status = r.status_code
+		return r.json
+	
+	def put(self, data, parms=[]):
+		'''
+		Wrapper for requests.put
+		'''
+		url = self.makeRurl(parms)
+		d = json.dumps(data) # otherwise get form encoded
+		r = requests.put(url, data=d, auth=self.auth)
+		self.res = r
+		self.status = r.status_code
+		return r.json
 	
 	def exists(self):
 		# GET /repos/:owner/:repo
-		status, r = self.g.repos[self.username][self.repo].get()
-		if status == 200:
+		self.get()
+		if self.status == 200:
 			return True 
 		else:
 			return False
 		
 	def download(self, name):
 		# GET /repos/:owner/:repo/contents/:path
-		user = self.username
-		repo = self.repo
-		status, r = self.g.repos[user][repo].contents[name].get()
-		logging.debug(json.dumps(r, indent=2, sort_keys=True))
-		if status != 200:
+		r = self.get(['contents', name])
+		#r=self.g.repos[user][repo].contents[name].get()
+		logging.debug(json.dumps(r, indent=2,
+		                         sort_keys=True))
+		if self.status != 200:
 			raise IOError('File not found: ' + name)
 		logging.info('File loaded: ' + name)
 		self.last_sha = r['sha']
@@ -79,8 +102,6 @@ class Repo(object):
 		# auto_init=true on creation)
 		
 		# prepare message body
-		user = self.username
-		repo = self.repo
 		b64 = b64encode(content)
 		d = {'path':name,
 		     'message':self.commit_msg,
@@ -98,10 +119,13 @@ class Repo(object):
 				return
 		
 		# Create or update (needs sha)
-		status, r = self.g.repos[user][repo].contents[name].put(body=d)
-		if status not in (200, 201):
-			logging.error('Could not upload file. Status: {}'.format(status))
+		#r=self.g.repos[user]
+		#[repo].contents[name].put(body=d)
+		r = self.put(d, ['contents', name])
+		if self.status not in (200, 201):
+			logging.error('Could not upload file. Status: {}'.format(self.status))
 			pretty(r)
+			pretty(d)
 			raise IOError('Could not upload file')
 		logging.info('Uploaded file: ' + name)
 	
@@ -124,6 +148,17 @@ class Repo(object):
 			except IOError:
 				logging.error('Could not upload file: ' + name)
 				raise
+				
+	# Class methods
+	def repos(self):
+		r = self.g.user.repos.get()
+		for repo in r[1]:
+			print repo['name']
+
+	def create_repo(self, aname):
+		r = self.g.user.repos.post(
+			body={'name': aname, 'auto_init': True})
+		return r
 
 ################
 # CLI
@@ -155,3 +190,7 @@ class RepoCLI(cmd.Cmd):
 		f = [parms]
 		self.repo.upload_files(f)
 
+
+if __name__ == '__main__':
+	files = set(glob.glob('*.py')) - set(['sync.py'])
+	RepoCLI('giteasy', 'schimfim', 'Ninz2009', files)
