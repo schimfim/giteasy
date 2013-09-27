@@ -192,7 +192,34 @@ class RepoCLI(cmd.Cmd):
 
 
 if __name__ == '__main__':
-	import auth
-	files = set(glob.glob('*.py'))-set(['auth.py'])
-	RepoCLI(auth.repo, auth.user, auth.pwd, files)
+	import os.path
+	import os
+	import editor
+	import glob
+	import sys
+	import json
+	filepath = editor.get_path()
+	path = os.path.dirname(filepath)
+
+	print 'path:', path
+	os.chdir(path)
+	print glob.glob('*.py')
+	
+	#sys.path.append(path)
+	#import auth
+	try:
+		with open('gitauth.py') as f:
+			auth = json.load(f)
+	except IOError:
+		auth = {}
+		print 'No setup found. Please enter:'
+		auth['repo'] = raw_input(' repository: ')
+		auth['user'] = raw_input(' user: ')
+		auth['pwd'] = raw_input(' password: ')
+		with open('gitauth.py','w') as f:
+			json.dump(auth, f)
+		
+	files = set(glob.glob('*.py'))-set(['gitauth.py'])
+	RepoCLI(auth['repo'], auth['user'],
+	        auth['pwd'] , files)
 	
