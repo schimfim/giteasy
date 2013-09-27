@@ -1,5 +1,6 @@
-from giteasy import RepoCLI
-import glob
+# Copy giteasy.py to main directory
+import shutil
 
-files = set(glob.glob('*.py')) - set(['sync.py'])
-RepoCLI('giteasy', 'schimfim', 'Ninz2009', files)
+shutil.copy('giteasy.py', '..')
+print 'Copied giteasy.py'
+
