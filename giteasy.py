@@ -41,13 +41,14 @@ class Repo(object):
 		if self.exists():
 			logging.info('Connected to %s as %s',repo,user)
 		else: 
-			logging.info('Could not connect to repo:'+repo)
+			logging.error('Could not connect to repo:'+repo)
+			raise IOError()
 	
 	def makeRurl(self, parms):
 		s = self.rurl
 		for p in parms:
 			s += '/' + p
-		logging.info('url=%s', s)
+		logging.debug('url=%s', s)
 		return s
 	
 	def get(self, parms=[]):
@@ -114,7 +115,7 @@ class Repo(object):
 			d['sha'] = sha
 			self.last_sha = None
 		except IOError:
-			logging.info('File not found: ' + name)
+			logging.warning('File not found: ' + name)
 			if not self.auto_create:
 				return
 		
@@ -123,10 +124,8 @@ class Repo(object):
 		#[repo].contents[name].put(body=d)
 		r = self.put(d, ['contents', name])
 		if self.status not in (200, 201):
-			logging.error('Could not upload file. Status: {}'.format(self.status))
-			pretty(r)
-			pretty(d)
-			raise IOError('Could not upload file')
+			logging.error('Could not upload file. Status: %i', self.status)
+			raise IOError()
 		logging.info('Uploaded file: ' + name)
 	
 	#
@@ -137,7 +136,7 @@ class Repo(object):
 				with open(name, 'w') as f:
 					f.write(txt)
 			except IOError:
-				logging.info('File not found: ' + name)
+				logging.error('File not found: ' + name)
 	
 	def upload_files(self, files):
 		for name in files:
@@ -216,10 +215,13 @@ if __name__ == '__main__':
 		auth['repo'] = raw_input(' repository: ')
 		auth['user'] = raw_input(' user: ')
 		auth['pwd'] = raw_input(' password: ')
+		auth['ignore'] = []
 		with open('gitauth.py','w') as f:
 			json.dump(auth, f)
 		
-	files = set(glob.glob('*.py'))-set(['gitauth.py'])
+	py = set(glob.glob('*.py'))
+	ignore = set(auth['ignore'] + ['gitauth.py'])
+	files = py - ignore
 	RepoCLI(auth['repo'], auth['user'],
 	        auth['pwd'] , files)
 	
