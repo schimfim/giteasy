@@ -10,6 +10,7 @@ import json
 
 import logging
 logging.basicConfig(level=logging.INFO)
+logging.getLogger("requests.packages.urllib3.connectionpool").setLevel(logging.ERROR)
 
 API = 'https://api.github.com'
 
@@ -136,7 +137,7 @@ class Repo(object):
 				with open(name, 'w') as f:
 					f.write(txt)
 			except IOError:
-				logging.error('File not found: ' + name)
+				logging.warning('File not found: ' + name)
 	
 	def upload_files(self, files):
 		for name in files:
