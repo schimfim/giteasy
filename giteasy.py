@@ -63,7 +63,7 @@ class Repo(object):
 		r = requests.get(url, auth=self.auth)
 		self.res = r
 		self.status = r.status_code
-		return r.json
+		return r.json()
 	
 	def put(self, data, parms=[]):
 		'''
@@ -74,7 +74,7 @@ class Repo(object):
 		r = requests.put(url, data=d, auth=self.auth)
 		self.res = r
 		self.status = r.status_code
-		return r.json
+		return r.json()
 	
 	def exists(self):
 		# GET /repos/:owner/:repo
