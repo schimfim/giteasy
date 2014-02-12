@@ -39,6 +39,7 @@ class Repo(object):
 		self.repo = repo
 		self.res = None 
 		self.status = 0
+		logging.info('Connecting to %s as %s ...',repo,user)
 		if self.exists():
 			logging.info('Connected to %s as %s',repo,user)
 		else: 
@@ -46,6 +47,7 @@ class Repo(object):
 			raise IOError()
 	
 	def makeRurl(self, parms):
+		# todo: mit formatter besser ...
 		s = self.rurl
 		for p in parms:
 			s += '/' + p
@@ -172,23 +174,32 @@ class RepoCLI(cmd.Cmd):
 		self.cmdloop()
 	
 	def do_f(self, parms):
-		# Show list of files
+		"""
+		Show list of files
+		"""
 		print self.files
-	def help_f(self, parms):
-		print 'Show list of files'
 	
 	def do_d(self, parms):
-		# Download files
+		"""
+		Download all files
+		"""
 		self.repo.download_files(self.files)
 
 	def do_u(self, parms):
-		# Upload files
+		"""
+		Upload all files
+		"""
 		self.repo.upload_files(self.files)
 
 	def do_o(self, parms):
-		# Upload one file
+		"""
+		Upload individual file(s)
+		"""
 		f = [parms]
 		self.repo.upload_files(f)
+		
+	def do_exit(self, parms):
+		return True
 
 
 if __name__ == '__main__':
