@@ -7,12 +7,16 @@ import json
 import glob
 from string import join
 import json
+from time import sleep
 
 import logging
 logging.basicConfig(level=logging.INFO)
 logging.getLogger("requests.packages.urllib3.connectionpool").setLevel(logging.ERROR)
 
 API = 'https://api.github.com'
+SLEEP = 1.0
+# ... in secs to avoid error 409
+# see http://stackoverflow.com/questions/19576601/github-api-issue-with-file-upload
 
 # Utilities
 def content(d):
@@ -148,6 +152,7 @@ class Repo(object):
 				with open(name, 'r') as f:
 					txt = f.read()
 				self.upload(name, txt)
+				sleep(SLEEP)
 			except IOError:
 				logging.error('Could not upload file: ' + name)
 				raise
