@@ -128,6 +128,7 @@ class Repo(object):
 		r = self.put(d, ['contents', name])
 		if self.status not in (200, 201):
 			logging.error('Could not upload file. Status: %i', self.status)
+			logging.error('Message: %s', r['message'])
 			raise IOError()
 		logging.info('Uploaded file: ' + name)
 	
